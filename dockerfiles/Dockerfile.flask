@@ -1,0 +1,31 @@
+FROM python:3.8-slim-buster:latest
+
+ENV LC_CTYPE 'EN_US.UTF-8'
+
+ENV PATH /opt/bin:${PATH}
+
+ENV PYTHON_VERSION=3.7
+
+RUN apt-get update \
+        # dist-upgrade is more intelligent for auto removing/installing image
+        && apt-get dist-upgrade --yes \
+        && apt-get install --force-yes --allow-unauthenticated \
+        # this is a dpkg package for establising tcp connection outside host
+        socat \
+        python${PYTHON_VERSION} \
+        python${PYTHON_VERSION}-pip \
+        && apt-get clean all
+
+## install Python dependencies
+COPY requirements-flask.txt /tmp/requirements.txt
+RUN python${PYTHON_VERSION} -m pip install -r /tmp/requirements.txt
+
+COPY . /opt/bin/workdir
+
+WORKDIR /opt/bin/workdir
+
+COPY dockerfiles/entrypoint.flask.sh /opt/entrypoint.sh
+
+ENTRYPOINT ['/opt/entrypoint.sh']
+
+
